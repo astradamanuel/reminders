@@ -29,28 +29,44 @@ struct ContentView: View { // : View significa que cumple el protocolo View. Ese
     @State private var buscandoDireccion = false
     @State private var noSeEncontro = false
 
+    // @FocusState es un "puntero" que sabe qué campo tiene el teclado activo ahora.
+    // Se usa para saltar entre campos con la tecla "return".
+    @FocusState private var campoFocado: Campo?
+
+    // Enum para identificar cada campo del formulario
+    private enum Campo {
+        case titulo
+        case descripcion
+        case direccion
+    }
+
     private var fechaValida: Bool {
         selectedDate > Date()
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-
-                VStack(spacing: 8) {
+            // Cambiamos de VStack a List: toda la pantalla es scrolleable.
+            // Esto hace que en iPhone el teclado empuje el contenido sin tapar nada.
+            List {
+                // Section agrupa campos relacionados con un encabezado
+                Section("Nuevo recordatorio") {
                     TextField("Título del recordatorio", text: $newTitle) // El símbolo $ crea un Binding (enlace de doble vía). Si el usuario escribe, newTitle cambia. Si newTitle cambia por código, el texto en pantalla se borra.
-                        .textFieldStyle(.roundedBorder)
-                        .autocorrectionDisabled()
-                        .onSubmit(addItem)
+                        .focused($campoFocado, equals: .titulo) // Conecta este campo con el FocusState
+                        .submitLabel(.next) // Cambia la tecla "return" del teclado a "siguiente"
+                        .onSubmit { campoFocado = .descripcion } // Al tocar return, salta a descripción
 
                     TextField("Descripción (opcional)", text: $newDescription, axis: .vertical)
-                        .textFieldStyle(.roundedBorder)
                         .lineLimit(1...3)
+                        .focused($campoFocado, equals: .descripcion)
+                        .submitLabel(.next)
+                        .onSubmit { campoFocado = .direccion }
 
                     HStack {
                         TextField("Lugar o dirección (opcional)", text: $newDireccion)
-                            .textFieldStyle(.roundedBorder)
-                            .autocorrectionDisabled()
+                            .focused($campoFocado, equals: .direccion)
+                            .submitLabel(.search) // Cambia la tecla a "buscar"
+                            .onSubmit { Task { await buscarDireccion() } } // Al tocar return, busca el mapa
 
                         Button {
                             Task { await buscarDireccion() } // Los botones normales no pueden ser async (no pueden "esperar"). Task es la forma de decirle a Swift: "Arrancá una tarea paralela que sí pueda esperar a la red".
@@ -80,12 +96,16 @@ struct ContentView: View { // : View significa que cumple el protocolo View. Ese
                             .font(.caption)
                             .foregroundStyle(.green)
                             .lineLimit(2)
-                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
+                    DatePicker(
+                        "Fecha y hora",
+                        selection: $selectedDate,
+                        in: Date()...,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+
                     Button("Programar", action: addItem)
-                        .buttonStyle(.borderedProminent)
-                        .frame(maxWidth: .infinity)
                         .disabled(
                             newTitle
                                 .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -93,88 +113,19 @@ struct ContentView: View { // : View significa que cumple el protocolo View. Ese
                             || !fechaValida
                         )
                 }
-                .padding()
 
-                if !fechaValida {
-                    Text("La fecha no puede estar en el pasado")
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .padding(.bottom, 8)
-                }
-
-                DatePicker(
-                    "Fecha y hora",
-                    selection: $selectedDate,
-                    in: Date()...,
-                    displayedComponents: [.date, .hourAndMinute]
-                )
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-
-                List {
-                    ForEach(store.items) { item in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.title)
-                                .font(.headline)
-
-                            if let details = item.details, !details.isEmpty {
-                                Text(details)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
-                            }
-
-                            if let lat = item.lat, let lon = item.lon {
-                                Button("Mapa") {
-                                    abrirMapa(lat: lat, lon: lon)
-                                }
-                                .font(.caption2)
-                                .buttonStyle(.bordered)
-                            }
-
-                            if let direccion = item.direccion, !direccion.isEmpty {
-                                Label(direccion, systemImage: "mappin.and.ellipse")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-
-                            if let reminderDate = item.reminderDate {
-                                Label(
-                                    reminderDate.formatted(
-                                        date: .abbreviated,
-                                        time: .shortened
-                                    ),
-                                    systemImage: "bell"
-                                )
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            } else {
-                                Text(
-                                    item.createdAt.formatted(
-                                        date: .abbreviated,
-                                        time: .shortened
-                                    )
-                                )
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.vertical, 2)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            itemToEdit = item
-                        }
-                    }
-                    .onDelete { offsets in
-                        store.delete(at: offsets)
-                    }
-                }
-                .listStyle(.plain)
-                .overlay {
+                // Segunda sección: la lista de recordatorios existentes
+                Section("Tus recordatorios") {
                     if store.items.isEmpty {
                         Text("No hay recordatorios")
                             .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(store.items) { item in
+                            fila(for: item)
+                        }
+                        .onDelete { offsets in
+                            store.delete(at: offsets)
+                        }
                     }
                 }
             }
@@ -192,6 +143,69 @@ struct ContentView: View { // : View significa que cumple el protocolo View. Ese
                     )
                 }
             }
+            // Compilación condicional: esto solo se aplica en iOS, no en Mac
+            // Hace que el título "Recordatorios" sea más chico en iPhone
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+        }
+    }
+
+    // Función separada para dibujar cada fila de la lista
+    // @ViewBuilder permite devolver "alguna vista" sin especificar el tipo exacto
+    @ViewBuilder
+    private func fila(for item: Item) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(item.title)
+                .font(.headline)
+
+            if let details = item.details, !details.isEmpty {
+                Text(details)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+
+            if let lat = item.lat, let lon = item.lon {
+                Button("Mapa") {
+                    abrirMapa(lat: lat, lon: lon)
+                }
+                .font(.caption2)
+                .buttonStyle(.bordered)
+            }
+
+            if let direccion = item.direccion, !direccion.isEmpty {
+                Label(direccion, systemImage: "mappin.and.ellipse")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            if let reminderDate = item.reminderDate {
+                Label(
+                    reminderDate.formatted(
+                        date: .abbreviated,
+                        time: .shortened
+                    ),
+                    systemImage: "bell"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } else {
+                Text(
+                    item.createdAt.formatted(
+                        date: .abbreviated,
+                        time: .shortened
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            itemToEdit = item
         }
     }
 
@@ -263,6 +277,7 @@ struct ContentView: View { // : View significa que cumple el protocolo View. Ese
         latSeleccionado = nil
         lonSeleccionado = nil
         noSeEncontro = false
+        campoFocado = nil // Cierra el teclado después de programar
     }
 
     private func saveEditedReminder(
