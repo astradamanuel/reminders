@@ -1,0 +1,14 @@
+# Cosas de macOS
+.DS_Store
+
+# Cosas internas de Xcode que NO se suben
+xcuserdata/
+*.xcuserstate
+DerivedData/
+*.xccheckout
+*.xcscmblueprint
+
+# Builds
+build/
+*.ipa
+*.dSYM.zip
