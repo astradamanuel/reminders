@@ -1,14 +1,3 @@
-//
-//  EditReminderView.swift → la pantalla para editar
-//
-// Es el recordatorio que ContentView nos pasa al abrir el sheet
-// esta vista no guarda nada ella misma
-
-// 1. Al abrir, copiamos los datos reales a estos borradores.
-// 2. El usuario manosea los borradores.
-// 3. Si guarda → mandamos los borradores por onSave.
-// 4. Si cancela → los borradores mueren con el sheet y nadie se entera.
-
 import SwiftUI
 
 struct EditReminderView: View {
@@ -21,41 +10,37 @@ struct EditReminderView: View {
     @State private var title = ""
     @State private var details = ""
     @State private var date = Date()
-    @State private var mostrarErrorFecha = false
+    @State private var showDateError = false
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Título") {
-                    TextField("Título", text: $title)
+                Section {
+                    TextField("Title", text: $title)
                         .autocorrectionDisabled()
-                }
-
-                Section("Descripción") {
-                    TextField("Descripción (opcional)", text: $details, axis: .vertical)
+                    TextField("Description (optional)", text: $details, axis: .vertical)
                         .lineLimit(2...5)
                 }
-
-                Section("Fecha y hora") {
+                Section {
                     DatePicker(
-                        "Fecha y hora",
+                        "Date and time",
                         selection: $date,
                         displayedComponents: [.date, .hourAndMinute]
                     )
                 }
             }
-            .navigationTitle("Editar recordatorio")
+            .navigationTitle("Edit reminder")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
+                    Button("Save") {
                         if date <= Date() {
-                            mostrarErrorFecha = true
+                            showDateError = true
                         } else {
                             onSave(title, details, date)
                             dismiss()
@@ -69,12 +54,12 @@ struct EditReminderView: View {
                 }
             }
             .alert(
-                "Fecha inválida",
-                isPresented: $mostrarErrorFecha
+                "Invalid date",
+                isPresented: $showDateError
             ) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("La fecha no puede estar en el pasado.")
+                Text("The date cannot be in the past.")
             }
             .onAppear {
                 title = item.title
@@ -82,5 +67,16 @@ struct EditReminderView: View {
                 date = item.reminderDate ?? item.createdAt
             }
         }
+        .frame(minWidth: 400, minHeight: 350)
+        
+#if os(iOS)
+            .frame(minWidth: 400, minHeight: 350)
+#endif
+        }
     }
+
+#Preview {
+    EditReminderView(item: Item(title: "Manu", details: "Hoy", reminderDate: Date())) { newTitle, newDetails, newreminderDate in
+    }
+        .environment(ItemStore())
 }

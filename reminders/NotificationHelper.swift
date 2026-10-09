@@ -1,39 +1,29 @@
-//
-//  NotificationHelper.swift → el que habla con el sistema de notificaciones
-//  solamente funciones sueltas
-//  solo arma pedidos y se los pasa al sistema.
-// el patron que se repite
-// 1. UNMutableNotificationContent  → el QUÉ (título, cuerpo, sonido)
-// 2. UN...Trigger                  → el CUÁNDO
-// 3. UNNotificationRequest         → el ticket que junta todo + ID
-// 4. center.add(request)           → entregarlo al sistema
+import UserNotifications
 
-import UserNotifications // UN = user notifications
-
-func pedirPermisoNotificaciones() {
+func requestNotificationPermission() {
     UNUserNotificationCenter.current().requestAuthorization(
         options: [.alert, .sound]
     ) { granted, error in
         if let error {
-            print("Error de permiso:", error)
+            print("Permission error:", error)
         }
 
-        print("Permiso concedido:", granted)
+        print("Permission granted:", granted)
     }
 }
 
-func programarNotificacionEn(segundos: Int) {
-    let content = UNMutableNotificationContent() // representa lo que se ve y se escucha: título, cuerpo, sonido.
-    content.title = "Prueba"
-    content.body = "Esta notificación tiene sonido"
-    content.sound = .default // Acá no ponemos UNNotificationSound.default completo porque Swift ya sabe el tipo:
-                            //  se puede escribir solo .default. Eso se llama inferencia por contexto.
-    let trigger = UNTimeIntervalNotificationTrigger( // trigger = "el cuando"
-        timeInterval: TimeInterval(segundos),
+func scheduleNotification(seconds: Int) {
+    let content = UNMutableNotificationContent()
+    content.title = "Test"
+    content.body = "This notification has sound"
+    content.sound = .default
+
+    let trigger = UNTimeIntervalNotificationTrigger(
+        timeInterval: TimeInterval(seconds),
         repeats: false
     )
 
-    let request = UNNotificationRequest( // el ticket que junta todo
+    let request = UNNotificationRequest(
         identifier: UUID().uuidString,
         content: content,
         trigger: trigger
@@ -41,17 +31,17 @@ func programarNotificacionEn(segundos: Int) {
 
     UNUserNotificationCenter.current().add(request) { error in
         if let error {
-            print("Error al programar notificación:", error)
+            print("Error scheduling notification:", error)
         } else {
-            print("Notificación programada")
+            print("Notification scheduled")
         }
     }
 }
 
-func programarNotificacionExito() {
+func scheduleSuccessNotification() {
     let content = UNMutableNotificationContent()
-    content.title = "Recordatorio programado"
-    content.body = "Tu recordatorio se guardó correctamente."
+    content.title = "Reminder scheduled"
+    content.body = "Your reminder was saved successfully."
     content.sound = .default
 
     let trigger = UNTimeIntervalNotificationTrigger(
@@ -67,41 +57,41 @@ func programarNotificacionExito() {
 
     UNUserNotificationCenter.current().add(request) { error in
         if let error {
-            print("Error al programar notificación de éxito:", error)
+            print("Error scheduling success notification:", error)
         } else {
-            print("Notificación de éxito programada")
+            print("Success notification scheduled")
         }
     }
 }
 
-func programarRecordatorio(
-    titulo: String,
-    descripcion: String?,
-    direccion: String?,
-    fecha: Date
-    ) -> String {
+func scheduleReminder(
+    title: String,
+    description: String?,
+    direction: String?,
+    date: Date
+) -> String {
     let notificationID = UUID().uuidString
 
     let content = UNMutableNotificationContent()
-    content.title = titulo
+    content.title = title
 
-    var bodyFinal = "Tenés un recordatorio."
+    var finalBody = "You have a reminder."
 
-    if let bodyText = descripcion?.trimmingCharacters(in: .whitespacesAndNewlines),
+    if let bodyText = description?.trimmingCharacters(in: .whitespacesAndNewlines),
        !bodyText.isEmpty {
-        bodyFinal = bodyText
+        finalBody = bodyText
     }
 
-    if let direccion = direccion, !direccion.isEmpty {
-        bodyFinal += "\n📍 \(direccion)"
+    if let direction = direction, !direction.isEmpty {
+        finalBody += "\n📍 \(direction)"
     }
 
-    content.body = bodyFinal
+    content.body = finalBody
     content.sound = .default
 
     let components = Calendar.current.dateComponents(
         [.year, .month, .day, .hour, .minute],
-        from: fecha
+        from: date
     )
 
     let trigger = UNCalendarNotificationTrigger(
@@ -117,15 +107,16 @@ func programarRecordatorio(
 
     UNUserNotificationCenter.current().add(request) { error in
         if let error {
-            print("Error al programar recordatorio:", error)
+            print("Error scheduling reminder:", error)
         } else {
-            print("Recordatorio programado para:", fecha)
+            print("Reminder scheduled for:", date)
         }
     }
 
     return notificationID
 }
-func cancelarNotificacion(id: String?) {
+
+func cancelNotification(id: String?) {
     guard let id = id else {
         return
     }
@@ -135,5 +126,3 @@ func cancelarNotificacion(id: String?) {
             withIdentifiers: [id]
         )
 }
-
-

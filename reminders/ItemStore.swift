@@ -1,20 +1,13 @@
-//
-// ItemStore.swift → el cerebro que guarda y administra los datos
-// Guarda la lista en memoria (para que la pantalla la muestre rápido).
-// Guarda la lista en disco (para que no se pierda al cerrar la app).
-// Administra los recordatorios: agregar, editar, borrar, ordenar.
-//
-
 import SwiftUI
 import Observation
-import UserNotifications // para cancelar notificaciones pendientes al borrar
+import UserNotifications
 
-@Observable // avisa a SwiftUI cuando algo cambia // vigilá las propiedades; si alguna cambia, avisale a las vistas para que se redibujen
-final class ItemStore { // final = nadie puede heredar de esta clase // class tipo de referencia: todos comparten el mismo cerebro (si fuera struct, cada vista tendría su copia)
+@Observable
+final class ItemStore {
 
-    private let persistenceEnabled = true // interruptor de persistencia
+    private let persistenceEnabled = true
 
-    var items: [Item] = [] // [Item] array de Item y en cuanto a [] arranca vacio (despues load() lo llena desde el disco).
+    var items: [Item] = []
 
     private var fileURL: URL {
         FileManager.default
@@ -30,7 +23,7 @@ final class ItemStore { // final = nadie puede heredar de esta clase // class ti
     func add(
         title: String,
         description: String?,
-        direccion: String?,
+        direction: String?,
         lat: Double?,
         lon: Double?,
         date: Date,
@@ -46,26 +39,26 @@ final class ItemStore { // final = nadie puede heredar de esta clase // class ti
         let item = Item(
             title: title,
             details: finalDescription,
-            direccion: direccion,
+            direction: direction,
             lat: lat,
             lon: lon,
             reminderDate: date,
             notificationID: notificationID
         )
 
-        items.append(item) // append → lo mete en memoria.
-        sortItems() // ordena por fecha.
-        save() // guarda
+        items.append(item)
+        sortItems()
+        save()
     }
-    
-    func update(item updatedItem: Item) { // por dentro la variable se llama updatedItem.
-        if let index = items.firstIndex(where: { $0.id == updatedItem.id }) { //closure
+
+    func update(item updatedItem: Item) {
+        if let index = items.firstIndex(where: { $0.id == updatedItem.id }) {
             items[index] = updatedItem
             sortItems()
             save()
         }
     }
-    
+
     func delete(at offsets: IndexSet) {
         for index in offsets {
             if let notificationID = items[index].notificationID {
@@ -80,7 +73,7 @@ final class ItemStore { // final = nadie puede heredar de esta clase // class ti
         save()
     }
 
-    func load() { //  disco → memoria
+    func load() {
         guard persistenceEnabled else {
             return
         }
@@ -91,39 +84,37 @@ final class ItemStore { // final = nadie puede heredar de esta clase // class ti
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
 
-            items = try decoder.decode([Item].self, from: data) // “convertime estos bytes en un array de Item”. [Item].self = “el tipo array-de-Item, como valor”. Funciona porque Item es Codable.
+            items = try decoder.decode([Item].self, from: data)
             sortItems()
         } catch {
-            items = [] // si falló (archivo inexistente o roto), arrancamos vacíos sin crashear.
+            items = []
         }
     }
 
-    private func save() { // memoria → disco
+    private func save() {
         guard persistenceEnabled else {
             return
         }
 
         do {
-            let encoder = JSONEncoder() // traductor inverso: objetos → JSON
+            let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             encoder.dateEncodingStrategy = .iso8601
 
-            let data = try encoder.encode(items) // Convierte todo el array a bytes JSON.
+            let data = try encoder.encode(items)
 
             try data.write(
                 to: fileURL,
                 options: [.atomic, .completeFileProtection]
             )
         } catch {
-            print("Error al guardar:", error)
+            print("Error saving:", error)
         }
     }
 
-    private func sortItems() { // ordenar
+    private func sortItems() {
         items.sort { first, second in
             let firstDate = first.reminderDate ?? first.createdAt
-            // ?? Si el recordatorio tiene fecha de recordatorio,
-            // usá esa. Si no, usá la fecha de creación
             let secondDate = second.reminderDate ?? second.createdAt
 
             return firstDate < secondDate
