@@ -28,6 +28,8 @@ struct AddReminderView: View {
         selectedDate > Date()
     }
     
+    let onReminderAdded: () -> Void
+    
     var body: some View {
         NavigationStack {
             List {
@@ -146,7 +148,6 @@ struct AddReminderView: View {
             date: selectedDate
         )
         
-        scheduleSuccessNotification()
         
         store.add(
             title: title,
@@ -158,7 +159,10 @@ struct AddReminderView: View {
             notificationID: notificationID
         )
         
+        onReminderAdded()
+        
         dismiss()
+        
         
         newTitle = ""
         newDescription = ""
@@ -168,10 +172,11 @@ struct AddReminderView: View {
         selectedLon = nil
         notFound = false
         focusedField = nil
+        
     }
 }
 
 #Preview {
-    AddReminderView()
+    AddReminderView(onReminderAdded: {} )
         .environment(ItemStore())
 }

@@ -38,31 +38,7 @@ func scheduleNotification(seconds: Int) {
     }
 }
 
-func scheduleSuccessNotification() {
-    let content = UNMutableNotificationContent()
-    content.title = "Reminder scheduled"
-    content.body = "Your reminder was saved successfully."
-    content.sound = .default
 
-    let trigger = UNTimeIntervalNotificationTrigger(
-        timeInterval: 10,
-        repeats: false
-    )
-
-    let request = UNNotificationRequest(
-        identifier: UUID().uuidString,
-        content: content,
-        trigger: trigger
-    )
-
-    UNUserNotificationCenter.current().add(request) { error in
-        if let error {
-            print("Error scheduling success notification:", error)
-        } else {
-            print("Success notification scheduled")
-        }
-    }
-}
 
 func scheduleReminder(
     title: String,
