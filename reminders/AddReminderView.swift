@@ -96,8 +96,9 @@ struct AddReminderView: View {
                 }
             }
             .navigationTitle("New reminder")
-            .frame(minWidth: 400, minHeight: 450)
-#if os(iOS)
+            
+            
+#if os(macOS)
             .frame(minWidth: 400, minHeight: 450)
 #endif
         }
