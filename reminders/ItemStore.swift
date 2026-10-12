@@ -61,12 +61,7 @@ final class ItemStore {
 
     func delete(at offsets: IndexSet) {
         for index in offsets {
-            if let notificationID = items[index].notificationID {
-                UNUserNotificationCenter.current()
-                    .removePendingNotificationRequests(
-                        withIdentifiers: [notificationID]
-                    )
-            }
+                    cancelNotification(id: items[index].notificationID)
         }
 
         items.remove(atOffsets: offsets)

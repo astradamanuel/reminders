@@ -12,34 +12,6 @@ func requestNotificationPermission() {
     }
 }
 
-func scheduleNotification(seconds: Int) {
-    let content = UNMutableNotificationContent()
-    content.title = "Test"
-    content.body = "This notification has sound"
-    content.sound = .default
-
-    let trigger = UNTimeIntervalNotificationTrigger(
-        timeInterval: TimeInterval(seconds),
-        repeats: false
-    )
-
-    let request = UNNotificationRequest(
-        identifier: UUID().uuidString,
-        content: content,
-        trigger: trigger
-    )
-
-    UNUserNotificationCenter.current().add(request) { error in
-        if let error {
-            print("Error scheduling notification:", error)
-        } else {
-            print("Notification scheduled")
-        }
-    }
-}
-
-
-
 func scheduleReminder(
     title: String,
     description: String?,

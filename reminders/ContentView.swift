@@ -65,6 +65,7 @@ struct ContentView: View {
                     Text("Reminder scheduled")
                         .padding()
                         .background(.regularMaterial)
+                        .background(.green)
                         .clipShape(
                             RoundedRectangle(cornerRadius: 12)
                         )
