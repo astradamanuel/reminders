@@ -8,6 +8,7 @@ final class ItemStore {
     private let persistenceEnabled = true
 
     var items: [Item] = []
+    var loadError: String? = nil
 
     private var fileURL: URL {
         FileManager.default
@@ -69,8 +70,15 @@ final class ItemStore {
     }
 
     func load() {
+        
         guard persistenceEnabled else {
             return
+        }
+        
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+                items = []
+                loadError = nil
+                return
         }
 
         do {
@@ -79,10 +87,15 @@ final class ItemStore {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
 
-            items = try decoder.decode([Item].self, from: data)
+            let loadedItems = try decoder.decode([Item].self, from: data)
+            
+            items = loadedItems
             sortItems()
+            loadError = nil
+            
         } catch {
-            items = []
+            loadError = error.localizedDescription
+            print("Error loading items:", error)
         }
     }
 
@@ -90,7 +103,12 @@ final class ItemStore {
         guard persistenceEnabled else {
             return
         }
-
+        
+        guard loadError == nil else {
+            print ("Save cancelled: item could not be loaded")
+            return
+        }
+        
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
