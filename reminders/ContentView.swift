@@ -7,6 +7,7 @@ struct ContentView: View {
     
     @State private var showingAddSheet = false
     @State private var itemToEdit: Item?
+    @State private var showConfirmation = false
     
     var body: some View {
         NavigationStack {
@@ -50,8 +51,28 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $showingAddSheet) {
-                AddReminderView()
+            AddReminderView {
+                showConfirmation = true
+                    
+                Task {
+                        try? await Task.sleep(for: .seconds(10))
+                        showConfirmation = false
+                    }
+                }
             }
+            .overlay(alignment: .top) {
+                if showConfirmation {
+                    Text("Reminder scheduled")
+                        .padding()
+                        .background(.regularMaterial)
+                        .background(.green)
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: 12)
+                        )
+                        .padding()
+                }
+            }
+            
     #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
     #endif

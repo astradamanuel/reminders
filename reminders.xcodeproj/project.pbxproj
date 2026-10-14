@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		A367B41C307852D9006BD492 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A367B41B307852D9006BD492 /* Alamofire */; };
-		A367B41E307852D9006BD492 /* AlamofireDynamic in Frameworks */ = {isa = PBXBuildFile; productRef = A367B41D307852D9006BD492 /* AlamofireDynamic */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,7 +28,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A367B41C307852D9006BD492 /* Alamofire in Frameworks */,
-				A367B41E307852D9006BD492 /* AlamofireDynamic in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -73,7 +71,6 @@
 			name = reminders;
 			packageProductDependencies = (
 				A367B41B307852D9006BD492 /* Alamofire */,
-				A367B41D307852D9006BD492 /* AlamofireDynamic */,
 			);
 			productName = reminders;
 			productReference = A309B41A3038F29A001A6A91 /* reminders.app */;
@@ -382,11 +379,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A367B41A307852D9006BD492 /* XCRemoteSwiftPackageReference "Alamofire" */;
 			productName = Alamofire;
-		};
-		A367B41D307852D9006BD492 /* AlamofireDynamic */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A367B41A307852D9006BD492 /* XCRemoteSwiftPackageReference "Alamofire" */;
-			productName = AlamofireDynamic;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

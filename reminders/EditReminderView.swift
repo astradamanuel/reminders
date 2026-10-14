@@ -67,10 +67,10 @@ struct EditReminderView: View {
                 date = item.reminderDate ?? item.createdAt
             }
         }
-        .frame(minWidth: 400, minHeight: 350)
         
-#if os(iOS)
-            .frame(minWidth: 400, minHeight: 350)
+        
+#if os(macOS)
+        .frame(minWidth: 400, minHeight: 350)
 #endif
         }
     }
